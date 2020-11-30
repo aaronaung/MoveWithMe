@@ -1,13 +1,14 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import io from 'socket.io-client';
 import Peer from 'peerjs';
-import { withRouter } from 'react-router-dom';
+import { withRouter, useHistory } from 'react-router-dom';
 import queryString from 'query-string';
 import * as _ from 'lodash';
 import CamVideo from '../CamVideo';
 import * as posenet from '@tensorflow-models/posenet';
 import { Grid, makeStyles } from '@material-ui/core';
 import { useNotificationContext } from '../../contexts/NotificationContext';
+import { joinRoom } from '../../api/room';
 
 const useStyles = makeStyles(() => ({
     gridItem: {
@@ -23,6 +24,7 @@ export default withRouter(({ match, location }) => {
     const me = queryString.parse(location.search).name;
     const roomID = match.params.id;
     const classes = useStyles();
+    const history = useHistory();
 
     const [net, setNet] = useState();
     const [videoStreams, setVideoStreams] = useState({});
@@ -134,6 +136,7 @@ export default withRouter(({ match, location }) => {
 
                         // if the caller hangs up/closes the connection (when the socket disconnects) then remove their video
                         call.on('close', () => {
+                            notify(`${callerID} left the room.`);
                             setVideoStreams((v) => {
                                 let copy = _.cloneDeep(v);
                                 delete copy[callerID];
